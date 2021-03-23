@@ -67,8 +67,8 @@ impl <'a> ClusterFinder<'a> {
 
         // We dont need to find the path itself, just the **existence** of a path
         // This can be done by simply checking if our cluster contains points
-        // which are connected to the top or bottom. If they exists, by their
-        // construction, so does a path between them.
+        // which are connected to the top or bottom. If they exists, so does a
+        // path between them by their construction.
         for pos in &self.cluster {
             match pos {
                 (_, 0) => connected_top = true,
