@@ -22,6 +22,10 @@ impl <'a> ClusterFinder<'a> {
         let init_y: usize = rng.gen_range(0usize..grid.grid.num_columns());
         let initial_point = (init_x, init_y);
 
+        ClusterFinder::new_with_starting_point(grid, initial_point)
+    }
+
+    pub fn new_with_starting_point(grid: &Grid, initial_point: Pos) -> ClusterFinder {
         ClusterFinder {
             grid,
             initial_point,
@@ -76,9 +80,12 @@ impl <'a> ClusterFinder<'a> {
                 (_, _) => {}
             }
 
+            if connected_bottom && connected_top {
+                return true;
+            }
         }
 
-        connected_bottom && connected_top
+        false
     }
 }
 
