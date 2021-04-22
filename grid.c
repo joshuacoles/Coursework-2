@@ -58,13 +58,13 @@ CellType *idx(Grid grid, int along_x, int along_y) {
 }
 
 CellType *idxp(Grid grid, Pos pos) {
-    return &grid.data[pos(grid, pos.x, pos.y)];
+    return &grid.data[posp(grid, pos)];
 }
 
 void printGrid(Grid grid) {
     for (int i = 0; i < grid.y_dim; ++i) {
         for (int j = 0; j < grid.x_dim; ++j) {
-            printf("%c", *idx(grid, j, i));
+            fprintf(stdout, "%c", *idx(grid, j, i));
         }
 
         printf("\n");
@@ -80,7 +80,7 @@ Pos addP(Pos a, int dx, int dy) {
 
 // Remove element at `index` from `array`, updating `len`.
 void removeElement(Pos *array, int index, int *len) {
-    for (int i = index; i < len - 1; i++) {
+    for (int i = index; i < *len - 1; i++) {
         array[i] = array[i + 1];
     }
 
@@ -94,7 +94,7 @@ int directlyReachableFromP(Grid grid, Pos pos, Pos *out) {
 
     switch (type) {
         case INSULATOR:
-            return;
+            return 0;
 
         case SUPER_CONDUCTOR:
             out[found] = addP(pos, 1, 1);

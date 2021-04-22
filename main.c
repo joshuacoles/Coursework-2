@@ -1,12 +1,18 @@
-#include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>
+#include <time.h>
 
 #include "grid.h"
 
 int main() {
-    Grid grid = allocateGrid(grid);
+    srand(time(NULL));
 
-    printf("Hello, World!\n");
+    int x_dim = 10;
+    int y_dim = 10;
+
+    Grid grid = allocateGrid(x_dim, y_dim);
+    fillGrid(grid, 10, 0);
+    printGrid(grid);
+    freeGrid(grid);
+
     return 0;
 }

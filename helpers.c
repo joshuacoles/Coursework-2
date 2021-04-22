@@ -11,7 +11,7 @@ bool contains(int const *l, int len, int r) {
 
 // Todo fix this
 int randomUniform(int r0, int r1) {
-    return (r0 + r1) / (double) 2;
+    return (rand() % (r1 - r0)) + r0;
 }
 
 bool randomBool(double p) {
