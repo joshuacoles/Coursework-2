@@ -5,6 +5,21 @@
 #include "helpers.h"
 #include "grid.h"
 
+int pos(Grid grid, Pos pos) {
+    return pos.x + (pos.y * grid.y_dim);
+}
+
+CellType *idx(Grid grid, Pos p) {
+    return &grid.data[pos(grid, p)];
+}
+
+Pos addP(Pos a, int dx, int dy) {
+    return (Pos) {
+            .x = a.x + dx,
+            .y = a.y + dy
+    };
+}
+
 Grid allocateGrid(int x_dim, int y_dim) {
     // To get around overflowing arithmetic, we just make it invalid.
     assert(0 < x_dim && x_dim < INT32_MAX);
@@ -45,37 +60,14 @@ void freeGrid(Grid grid) {
     free(grid.data);
 }
 
-int pos(Grid grid, int along_x, int along_y) {
-    return along_x + (along_y * grid.y_dim);
-}
-
-int posp(Grid grid, Pos pos) {
-    return pos.x + (pos.y * grid.y_dim);
-}
-
-CellType *idx(Grid grid, int along_x, int along_y) {
-    return &grid.data[pos(grid, along_x, along_y)];
-}
-
-CellType *idxp(Grid grid, Pos pos) {
-    return &grid.data[posp(grid, pos)];
-}
-
 void printGrid(Grid grid) {
     for (int i = 0; i < grid.y_dim; ++i) {
         for (int j = 0; j < grid.x_dim; ++j) {
-            fprintf(stdout, "%c", *idx(grid, j, i));
+            fprintf(stdout, "%c", *idx(grid, (Pos) {j, i}));
         }
 
         printf("\n");
     }
-}
-
-Pos addP(Pos a, int dx, int dy) {
-    return (Pos) {
-            .x = a.x + dx,
-            .y = a.y + dy
-    };
 }
 
 // Remove element at `index` from `array`, updating `len`.
@@ -89,7 +81,7 @@ void removeElement(Pos *array, int index, int *len) {
 
 // Returns the number of elements found, placed in oit
 int directlyReachableFromP(Grid grid, Pos pos, Pos *out) {
-    CellType type = *idxp(grid, pos);
+    CellType type = *idx(grid, pos);
     int found = 0;
 
     switch (type) {
