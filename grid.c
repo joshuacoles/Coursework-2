@@ -80,7 +80,7 @@ void removeElement(Pos *array, int index, int *len) {
 }
 
 // Returns the number of elements found, placed in oit
-int directlyReachableFromP(Grid grid, Pos pos, Pos *out) {
+int directlyReachableFrom(Grid grid, Pos pos, Pos *out) {
     CellType type = *idx(grid, pos);
     int found = 0;
 

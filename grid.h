@@ -23,4 +23,4 @@ void fillGrid(Grid grid, int n, double pSuper);
 void freeGrid(Grid grid);
 void printGrid(Grid grid);
 
-void directlyReachableFrom(Grid grid, int along_x, int along_y, int* out);
+int directlyReachableFrom(Grid grid, Pos pos, Pos *out);

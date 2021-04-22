@@ -8,4 +8,5 @@ add_executable(Coursework_2_c
         grid.h grid.c
         hashset.h hashset.c
         helpers.h helpers.c
+        cluster_finder.h cluster_finder.c
         )
