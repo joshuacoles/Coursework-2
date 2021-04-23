@@ -1,47 +1,50 @@
+#include <printf.h>
+#include <assert.h>
 #include "grid.h"
 #include "helpers.h"
-
-typedef struct ClusterFinder {
-    // TODo why is this a pointer?
-    Grid *grid;
-    Pos initialPoint;
-
-    Pos *cluster;
-    int clusterLength;
-
-    // The leading edge of the cluster, hence a subset of `cluster`
-    Pos *nextToProcess;
-    int nextToProcessLength;
-
-    // The leading edge of the cluster, hence a subset of `cluster`
-    Pos *temp;
-    int tempLength;
-} ClusterFinder;
+#include "cluster_finder.h"
 
 ClusterFinder newClusterFinderWithInitialPoint(Grid *grid, Pos initialPoint) {
+    Pos *cluster = malloc(grid->x_dim * grid->y_dim * sizeof(Pos));
+    Pos *nextToProcess = malloc(grid->x_dim * grid->y_dim * sizeof(Pos));
+
+    cluster[0] = initialPoint;
+    nextToProcess[0] = initialPoint;
+
     return (ClusterFinder) {
             .grid = grid,
             .initialPoint = initialPoint,
-            .cluster = malloc(grid->x_dim * grid->y_dim * sizeof(Pos)),
-            .clusterLength = 0,
-            .nextToProcess = malloc(grid->x_dim * grid->y_dim * sizeof(Pos)),
-            .nextToProcessLength = 0,
+            .cluster = cluster,
+            .clusterLength = 1,
+            .nextToProcess = nextToProcess,
+            .nextToProcessLength = 1,
 
-            .temp = malloc(grid->x_dim * grid->y_dim * sizeof(Pos)),
-            .tempLength = 0,
+            // Avoid reallocation
+            .found = malloc(grid->x_dim * grid->y_dim * sizeof(Pos)),
+            .foundLength = 0,
     };
 }
 
 ClusterFinder newClusterFinder(Grid *grid) {
-    int x = randomUniform(0, grid.x_dim);
-    int y = randomUniform(0, grid.y_dim);
+    int x = randomUniform(0, grid->x_dim);
+    int y = randomUniform(0, grid->y_dim);
 
     return newClusterFinderWithInitialPoint(grid, (Pos) {x, y});
+}
+
+void printPosList(char* prefix, Pos* list, int length) {
+    for (int i = 0; i < length; ++i) {
+        printf("%s(%d, %d)\n", prefix, list[i].x, list[i].y);
+    }
 }
 
 const int MAX_REACHABLE_SIZE = 8;
 
 void performSearchStep(ClusterFinder *self) {
+    printf("\tPerforming step\n");
+    printf("\t\tNTP:\n");
+    printPosList("\t\t\t", self->nextToProcess, self->nextToProcessLength);
+
     Pos *reachableCache = malloc(sizeof(Pos) * MAX_REACHABLE_SIZE);
     for (int i = 0; i < self->nextToProcessLength; ++i) {
         Pos pos = self->nextToProcess[i];
@@ -50,25 +53,31 @@ void performSearchStep(ClusterFinder *self) {
         for (int j = 0; j < reachableFrom; ++j) {
             if (!containsPos(self->cluster, self->clusterLength, reachableCache[j])) {
                 // TOdo make macro or explain ++ logic
-                self->temp[self->tempLength++] = reachableCache[j];
                 self->cluster[self->clusterLength++] = reachableCache[j];
+                self->found[self->foundLength++] = reachableCache[j];
             }
         }
+
+        printf("\t\t%d == %d\n", self->foundLength, reachableFrom);
     }
 
-    self->nextToProcessLength = 0;
-    // Explain why we are using a temp array
-    for (int i = 0; i < self->tempLength; ++i) {
-        self->nextToProcess[self->nextToProcessLength++] = self->temp[i];
-    }
+    printf("\t\tFound:\n");
+    printPosList("\t\t\t", self->found, self->foundLength);
 
-    self->tempLength = 0;
+    // Swap arrays
+    Pos* mv = self->nextToProcess;
+    self->nextToProcess = self->found;
+    self->found = mv;
+    self->nextToProcessLength = self->foundLength;
+    self->foundLength = 0;
 }
 
 void performSearch(ClusterFinder *self) {
-    while (self->nextToProcess != 0) {
+    printf("Starting search\n");
+    while (self->nextToProcessLength != 0) {
         performSearchStep(self);
     }
+    printf("Ending search\n");
 }
 
 bool didFormPath(ClusterFinder *self) {

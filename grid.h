@@ -1,3 +1,6 @@
+#ifndef COURSEWORK_2_C_GRID_H
+#define COURSEWORK_2_C_GRID_H
+
 #include <stdlib.h>
 
 typedef enum CellType {
@@ -24,3 +27,5 @@ void freeGrid(Grid grid);
 void printGrid(Grid grid);
 
 int directlyReachableFrom(Grid grid, Pos pos, Pos *out);
+
+#endif // COURSEWORK_2_C_GRID_H

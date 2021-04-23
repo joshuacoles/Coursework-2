@@ -1,6 +1,15 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include "grid.h"
+#include "helpers.h"
+
+PosList allocPosList(int capacity) {
+    return (PosList) {
+        .length = 0,
+        .capacity = capacity,
+        .data = malloc(capacity * sizeof(Pos))
+    };
+}
 
 bool contains(int const *l, int len, int r) {
     for (int i = 0; i < len; ++i) {
