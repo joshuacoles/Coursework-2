@@ -6,6 +6,8 @@
 #include "helpers.h"
 
 PosList allocPosList(int capacity) {
+    assert(capacity > 0);
+
     return (PosList) {
             .length = 0,
             .capacity = capacity,
@@ -23,16 +25,17 @@ void printPosList(char *prefix, PosList const *list) {
     }
 }
 
+// Append Pos to PosList, updating the length, re-allocating if need be.
 void appendToPosList(PosList *list, Pos pos) {
+    // If a PosList is too small, reallocate, double in size.
     if (list->length == list->capacity) {
-        printf("Realloc has not been implemented");
-        exit(1);
+        list->data = realloc(list->data, sizeof(Pos) * list->capacity * 2);
+        list->capacity = list->capacity * 2;
     }
 
     list->data[list->length++] = pos;
 }
 
-// Todo make this generic with fn pointer for equality?
 bool containsPos(PosList const *l, Pos r) {
     for (int i = 0; i < l->length; ++i) {
         if (posEq(l->data[i], r)) return true;

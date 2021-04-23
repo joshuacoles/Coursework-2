@@ -2,6 +2,7 @@
 #define COURSEWORK_2_C_GRID_H
 
 #include <stdlib.h>
+#include <stdbool.h>
 
 // Since we only refer to `CellType`s by the enum constants, we set their values to be the printed characters for
 // convenience.

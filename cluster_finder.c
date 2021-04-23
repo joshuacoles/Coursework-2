@@ -9,6 +9,9 @@ ClusterFinder newClusterFinderWithInitialPoint(Grid *grid, Pos initialPoint) {
     PosList nextToProcess = allocPosList(grid->x_dim * grid->y_dim);
     PosList found = allocPosList(grid->x_dim * grid->y_dim);
 
+    // Ensure initialPoint is within grid.
+    assert(0 < initialPoint.x < grid->x_dim && 0 < initialPoint.y < grid->y_dim);
+
     appendToPosList(&cluster, initialPoint);
     appendToPosList(&nextToProcess, initialPoint);
 
@@ -17,7 +20,7 @@ ClusterFinder newClusterFinderWithInitialPoint(Grid *grid, Pos initialPoint) {
             .initialPoint = initialPoint,
             .cluster = cluster,
             .nextToProcess = nextToProcess,
-            .found = found // todo explain
+            .found = found
     };
 }
 
@@ -35,6 +38,7 @@ void freeClusterFinder(ClusterFinder clusterFinder) {
     // DO NOT free grid, we do not own that memory
 }
 
+// This is stored as a constant to allow for (easier) 3D grids.
 const int MAX_REACHABLE_SIZE = 8;
 
 // Requires that a <-> is reachable from at least one direction.
@@ -52,7 +56,7 @@ void performSearchStep(ClusterFinder *self) {
 //    printPosList("\t\t\t", &self->cluster);
 //    printf("\t\tNTP:\n");
 //    printPosList("\t\t\t", &self->nextToProcess);
-//    printf("\t\tShould be empty:\n");
+//    printf("\t\tFound (should be empty):\n");
 //    printPosList("\t\t\t", &self->found);
 
     Pos *reachableCache = malloc(sizeof(Pos) * MAX_REACHABLE_SIZE);
@@ -61,7 +65,6 @@ void performSearchStep(ClusterFinder *self) {
         int reachableFrom = directlyReachableFrom(*self->grid, pos, reachableCache);
 
         for (int j = 0; j < reachableFrom; ++j) {
-            // TODO Add bidirectionality
             if (!containsPos(&self->cluster, reachableCache[j]) &&
                 areReachablePointsConnected(*self->grid, pos, reachableCache[j])) {
                 appendToPosList(&self->cluster, reachableCache[j]);
@@ -111,15 +114,6 @@ bool didFormPath(ClusterFinder *self) {
 
     return connectedBottom && connectedTop;
 }
-
-#define RED   "\x1B[31m"
-#define GRN   "\x1B[32m"
-#define YEL   "\x1B[33m"
-#define BLU   "\x1B[34m"
-#define MAG   "\x1B[35m"
-#define CYN   "\x1B[36m"
-#define WHT   "\x1B[37m"
-#define RESET "\x1B[0m"
 
 void printCluster(ClusterFinder *clusterFinder) {
     for (int j = 0; j < clusterFinder->grid->y_dim; ++j) {

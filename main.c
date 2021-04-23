@@ -34,7 +34,7 @@ void q2() {
     Grid grid = allocateGrid(x_dim, y_dim);
 
     for (int i = 0; i < n_grids; ++i) {
-        // Fill completely regenerates grid so we can reuse the allocation
+        // Fill completely regenerates grid (including insulators) so we can reuse the allocation
         fillGrid(grid, n_conductors, pSuper);
 
         ClusterFinder cf = newClusterFinder(&grid);

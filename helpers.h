@@ -4,12 +4,16 @@
 #include <stdbool.h>
 #include "grid.h"
 
+#define RED   "\x1B[31m"
+#define MAG   "\x1B[35m"
+#define RESET "\x1B[0m"
+
 /**
  * PosList, following standard practice, is comprised of the following.
  *
  * - `data`, a pointer to the backing memory allocation, of at least `sizeof(Pos) * capacity`.
  * - `length`, the current number of elements the list.
- *
+ * - `capacity`, maximum number of elements that can fit in the memory allocation.
  */
 typedef struct PosList {
     Pos* data;
@@ -21,7 +25,6 @@ PosList allocPosList(int capacity);
 void freePosList(PosList list);
 
 void printPosList(char *prefix, PosList const *list);
-
 
 void appendToPosList(PosList* list, Pos pos);
 

@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <printf.h>
 #include <assert.h>
+#include <libc.h>
 
 #include "helpers.h"
 #include "grid.h"
@@ -13,7 +14,10 @@ Grid allocateGrid(int x_dim, int y_dim) {
     assert(0 < x_dim && x_dim < INT32_MAX);
     assert(0 < y_dim && y_dim < INT32_MAX);
 
+    // Allocate backing array, initially its contents is undefined (although in practice zeroed). Due to our `CellType`
+    // representation however `0` is not a valid value so we memset to `INSULATOR` to ensure validity.
     CellType *data = malloc(sizeof(CellType) * x_dim * y_dim);
+    memset(data, INSULATOR, sizeof *data);
 
     return (Grid) {
             .x_dim = x_dim,

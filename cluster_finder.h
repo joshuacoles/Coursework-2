@@ -4,6 +4,11 @@
 #include "grid.h"
 #include "helpers.h"
 
+/*
+ * ClusterFinder maintains the state of the cluster finding algorithm.
+ *
+ * TODO document, including found
+ */
 typedef struct ClusterFinder {
     Grid *grid;
     Pos initialPoint;
