@@ -28,10 +28,11 @@ ClusterFinder newClusterFinder(Grid *grid) {
     return newClusterFinderWithInitialPoint(grid, (Pos) {x, y});
 }
 
-void printPosList(char *prefix, PosList const *list) {
-    for (int i = 0; i < list->length; ++i) {
-        printf("%s(%d, %d)\n", prefix, list->data[i].x, list->data[i].y);
-    }
+void freeClusterFinder(ClusterFinder clusterFinder) {
+    freePosList(clusterFinder.cluster);
+    freePosList(clusterFinder.nextToProcess);
+    freePosList(clusterFinder.found);
+    // DO NOT free grid, we do not own that memory
 }
 
 const int MAX_REACHABLE_SIZE = 8;
@@ -39,8 +40,8 @@ const int MAX_REACHABLE_SIZE = 8;
 // Requires that a <-> is reachable from at least one direction.
 // Ie that a is a member of reachableFrom(b) or visa-versa.
 bool areReachablePointsConnected(Grid grid, Pos a, Pos b) {
-    CellType cellA = *idx(grid, a);
-    CellType cellB = *idx(grid, b);
+    CellType cellA = *cellTypeOf(grid, a);
+    CellType cellB = *cellTypeOf(grid, b);
 
     return cellA != INSULATOR && cellB != INSULATOR;
 }
@@ -61,7 +62,8 @@ void performSearchStep(ClusterFinder *self) {
 
         for (int j = 0; j < reachableFrom; ++j) {
             // TODO Add bidirectionality
-            if (!containsPos(&self->cluster, reachableCache[j]) && areReachablePointsConnected(*self->grid, pos, reachableCache[j])) {
+            if (!containsPos(&self->cluster, reachableCache[j]) &&
+                areReachablePointsConnected(*self->grid, pos, reachableCache[j])) {
                 appendToPosList(&self->cluster, reachableCache[j]);
                 appendToPosList(&self->found, reachableCache[j]);
             }
@@ -96,12 +98,12 @@ bool didFormPath(ClusterFinder *self) {
         Pos pos = self->cluster.data[i];
         printf("Check (%d, %d)\n", pos.x, pos.y);
 
-        if (pos.y == 0) {
+        if (pos.y == self->grid->y_dim - 1) {
             printf("\t Con bottom (%d, %d)\n", pos.x, pos.y);
             connectedBottom = true;
         }
 
-        if (pos.y == self->grid->y_dim - 1) {
+        if (pos.y == 0) {
             printf("\t Con top (%d, %d)\n", pos.x, pos.y);
             connectedTop = true;
         }
@@ -122,7 +124,7 @@ bool didFormPath(ClusterFinder *self) {
 void printCluster(ClusterFinder *clusterFinder) {
     for (int j = 0; j < clusterFinder->grid->y_dim; ++j) {
         for (int i = 0; i < clusterFinder->grid->x_dim; ++i) {
-            bool isInitialPoint = clusterFinder->initialPoint.x == i && clusterFinder->initialPoint.y == j;
+            bool isInitialPoint = posEq(clusterFinder->initialPoint, (Pos) {i, j});
             bool inCluster = containsPos(&clusterFinder->cluster, (Pos) {i, j});
 
             if (isInitialPoint) {
@@ -131,7 +133,7 @@ void printCluster(ClusterFinder *clusterFinder) {
                 fprintf(stdout, MAG);
             }
 
-            CellType cellType = *idx(*clusterFinder->grid, (Pos) {i, j});
+            CellType cellType = *cellTypeOf(*clusterFinder->grid, (Pos) {i, j});
 
             fprintf(stdout, "%c", cellType);
 

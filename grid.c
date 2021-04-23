@@ -5,33 +5,25 @@
 #include "helpers.h"
 #include "grid.h"
 
-int pos(Grid grid, Pos pos) {
-    return pos.x + (pos.y * grid.y_dim);
-}
-
-CellType *idx(Grid grid, Pos p) {
-    return &grid.data[pos(grid, p)];
-}
-
-Pos addP(Pos a, int dx, int dy) {
-    return (Pos) {
-            .x = a.x + dx,
-            .y = a.y + dy
-    };
-}
-
 Grid allocateGrid(int x_dim, int y_dim) {
-    // To get around overflowing arithmetic, we just make it invalid.
+    // We avoid overflow, and hence UB, by simply restricting the valid values of `x_dim` and `y_dim`.
+    // The maximum delta of any connection is +/- 1, hence we restrict to [0, INT32_MAX - 1] so delta-ed range becomes
+    // [-1, INT32_MAX] which avoids overflow. We perform bounds checks on this to ensure the result is in
+    // [0, x_dim/y_dim] at computation.
     assert(0 < x_dim && x_dim < INT32_MAX);
     assert(0 < y_dim && y_dim < INT32_MAX);
 
-    CellType *data = malloc(x_dim * y_dim * sizeof(CellType));
+    CellType *data = malloc(sizeof(CellType) * x_dim * y_dim);
 
     return (Grid) {
             .x_dim = x_dim,
             .y_dim = y_dim,
             .data = data
     };
+}
+
+void freeGrid(Grid grid) {
+    free(grid.data);
 }
 
 void fillGrid(Grid grid, int n, double pSuper) {
@@ -56,32 +48,36 @@ void fillGrid(Grid grid, int n, double pSuper) {
     }
 }
 
-void freeGrid(Grid grid) {
-    free(grid.data);
-}
-
 void printGrid(Grid grid) {
     for (int j = 0; j < grid.y_dim; ++j) {
         for (int i = 0; i < grid.x_dim; ++i) {
-            fprintf(stdout, "%c", *idx(grid, (Pos) {i, j}));
+            fprintf(stdout, "%c", *cellTypeOf(grid, (Pos) {i, j}));
         }
 
         printf("\n");
     }
 }
 
-// Remove element at `index` from `array`, updating `len`.
-void removeElement(Pos *array, int index, int *len) {
-    for (int i = index; i < *len - 1; i++) {
-        array[i] = array[i + 1];
-    }
+CellType *cellTypeOf(Grid grid, Pos p) {
+    int linearIndex = p.x + (p.y * grid.y_dim);
 
-    (*len)--;
+    return &grid.data[linearIndex];
 }
 
-// Returns the number of elements found, placed in oit
+Pos offsetPosition(Pos a, int dx, int dy) {
+    return (Pos) {
+            .x = a.x + dx,
+            .y = a.y + dy
+    };
+}
+
+bool posEq(Pos a, Pos b) {
+    return a.x == b.x && a.y == b.y;
+}
+
+// FIXME this needs to be re-worked so we check for SC in corner even if we are currently on a Standard Cond.
 int directlyReachableFrom(Grid grid, Pos pos, Pos *out) {
-    CellType type = *idx(grid, pos);
+    CellType type = *cellTypeOf(grid, pos);
     int found = 0;
 
     switch (type) {
@@ -89,40 +85,27 @@ int directlyReachableFrom(Grid grid, Pos pos, Pos *out) {
             return 0;
 
         case SUPER_CONDUCTOR:
-            out[found] = addP(pos, 1, 1);
-            found++;
+            out[found++] = offsetPosition(pos, 1, 1);
+            out[found++] = offsetPosition(pos, -1, 1);
+            out[found++] = offsetPosition(pos, 1, -1);
+            out[found++] = offsetPosition(pos, -1, -1);
 
-            out[found] = addP(pos, -1, 1);
-            found++;
-
-            out[found] = addP(pos, 1, -1);
-            found++;
-
-            out[found] = addP(pos, -1, -1);
-            found++;
-
-            // Hey
         default:
-            out[found] = addP(pos, 0, 1);
-            found++;
-
-            out[found] = addP(pos, 0, -1);
-            found++;
-
-            out[found] = addP(pos, 1, 0);
-            found++;
-
-            out[found] = addP(pos, -1, 0);
-            found++;
+            // Because of lack of break / return, this will match CONDUCTOR on default and SUPER_CONDUCTOR on
+            // fallthrough.
+            out[found++] = offsetPosition(pos, 0, 1);
+            out[found++] = offsetPosition(pos, 0, -1);
+            out[found++] = offsetPosition(pos, 1, 0);
+            out[found++] = offsetPosition(pos, -1, 0);
     }
 
-    // Remove invalid positions
+    // Remove positions which are outside the bounds of the grid.
     for (int i = 0; i < found; ++i) {
         if ((out[i].x < 0 || out[i].x >= grid.x_dim) ||
             (out[i].y < 0 || out[i].y >= grid.y_dim)) {
-            removeElement(out, i, &found);
-
-            i--;
+            // Remove the ith element, move succeeding elements back one. Also update index to i - 1 so we do not skip
+            // over the new ith element when the ++i executes
+            removeElement(out, i--, &found);
         }
     }
 

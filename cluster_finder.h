@@ -17,6 +17,7 @@ typedef struct ClusterFinder {
 
 ClusterFinder newClusterFinderWithInitialPoint(Grid *grid, Pos initialPoint);
 ClusterFinder newClusterFinder(Grid *grid);
+void freeClusterFinder(ClusterFinder clusterFinder);
 
 const int MAX_REACHABLE_SIZE;
 

@@ -33,7 +33,6 @@ void q2() {
 
     Grid grid = allocateGrid(x_dim, y_dim);
 
-
     for (int i = 0; i < n_grids; ++i) {
         // Fill completely regenerates grid so we can reuse the allocation
         fillGrid(grid, n_conductors, pSuper);
@@ -42,6 +41,7 @@ void q2() {
         performSearch(&cf);
         printCluster(&cf);
         printf("%d == %d\n", didFormPath(&cf), true);
+        freeClusterFinder(cf);
     }
 
     freeGrid(grid);

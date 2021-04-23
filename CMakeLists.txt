@@ -6,7 +6,6 @@ set(CMAKE_C_STANDARD 11)
 add_executable(Coursework_2_c
         main.c
         grid.h grid.c
-        hashset.h hashset.c
         helpers.h helpers.c
         cluster_finder.h cluster_finder.c
         )
