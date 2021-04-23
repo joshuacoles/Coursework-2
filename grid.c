@@ -29,7 +29,7 @@ Grid allocateGrid(int x_dim, int y_dim) {
 
     return (Grid) {
             .x_dim = x_dim,
-            .y_dim = x_dim,
+            .y_dim = y_dim,
             .data = data
     };
 }
@@ -61,9 +61,9 @@ void freeGrid(Grid grid) {
 }
 
 void printGrid(Grid grid) {
-    for (int i = 0; i < grid.y_dim; ++i) {
-        for (int j = 0; j < grid.x_dim; ++j) {
-            fprintf(stdout, "%c", *idx(grid, (Pos) {j, i}));
+    for (int j = 0; j < grid.y_dim; ++j) {
+        for (int i = 0; i < grid.x_dim; ++i) {
+            fprintf(stdout, "%c", *idx(grid, (Pos) {i, j}));
         }
 
         printf("\n");
@@ -116,13 +116,13 @@ int directlyReachableFrom(Grid grid, Pos pos, Pos *out) {
             found++;
     }
 
+    // Remove invalid positions
     for (int i = 0; i < found; ++i) {
-        if (out[i].x < 0 || out[i].x >= grid.x_dim) {
+        if ((out[i].x < 0 || out[i].x >= grid.x_dim) ||
+            (out[i].y < 0 || out[i].y >= grid.y_dim)) {
             removeElement(out, i, &found);
-        }
 
-        if (out[i].y < 0 || out[i].y >= grid.x_dim) {
-            removeElement(out, i, &found);
+            i--;
         }
     }
 

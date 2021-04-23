@@ -21,6 +21,8 @@ typedef struct Pos {
     int y;
 } Pos;
 
+CellType *idx(Grid grid, Pos p);
+
 Grid allocateGrid(int x_dim, int y_dim);
 void fillGrid(Grid grid, int n, double pSuper);
 void freeGrid(Grid grid);

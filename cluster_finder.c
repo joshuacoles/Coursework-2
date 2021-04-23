@@ -5,23 +5,19 @@
 #include "cluster_finder.h"
 
 ClusterFinder newClusterFinderWithInitialPoint(Grid *grid, Pos initialPoint) {
-    Pos *cluster = malloc(grid->x_dim * grid->y_dim * sizeof(Pos));
-    Pos *nextToProcess = malloc(grid->x_dim * grid->y_dim * sizeof(Pos));
+    PosList cluster = allocPosList(grid->x_dim * grid->y_dim);
+    PosList nextToProcess = allocPosList(grid->x_dim * grid->y_dim);
+    PosList found = allocPosList(grid->x_dim * grid->y_dim);
 
-    cluster[0] = initialPoint;
-    nextToProcess[0] = initialPoint;
+    appendToPosList(&cluster, initialPoint);
+    appendToPosList(&nextToProcess, initialPoint);
 
     return (ClusterFinder) {
             .grid = grid,
             .initialPoint = initialPoint,
             .cluster = cluster,
-            .clusterLength = 1,
             .nextToProcess = nextToProcess,
-            .nextToProcessLength = 1,
-
-            // Avoid reallocation
-            .found = malloc(grid->x_dim * grid->y_dim * sizeof(Pos)),
-            .foundLength = 0,
+            .found = found // todo explain
     };
 }
 
@@ -32,63 +28,116 @@ ClusterFinder newClusterFinder(Grid *grid) {
     return newClusterFinderWithInitialPoint(grid, (Pos) {x, y});
 }
 
-void printPosList(char* prefix, Pos* list, int length) {
-    for (int i = 0; i < length; ++i) {
-        printf("%s(%d, %d)\n", prefix, list[i].x, list[i].y);
+void printPosList(char *prefix, PosList const *list) {
+    for (int i = 0; i < list->length; ++i) {
+        printf("%s(%d, %d)\n", prefix, list->data[i].x, list->data[i].y);
     }
 }
 
 const int MAX_REACHABLE_SIZE = 8;
 
+// Requires that a <-> is reachable from at least one direction.
+// Ie that a is a member of reachableFrom(b) or visa-versa.
+bool areReachablePointsConnected(Grid grid, Pos a, Pos b) {
+    CellType cellA = *idx(grid, a);
+    CellType cellB = *idx(grid, b);
+
+    return cellA != INSULATOR && cellB != INSULATOR;
+}
+
 void performSearchStep(ClusterFinder *self) {
-    printf("\tPerforming step\n");
-    printf("\t\tNTP:\n");
-    printPosList("\t\t\t", self->nextToProcess, self->nextToProcessLength);
+//    printf("\tPerforming step\n");
+//    printf("\t\tCluster:\n");
+//    printPosList("\t\t\t", &self->cluster);
+//    printf("\t\tNTP:\n");
+//    printPosList("\t\t\t", &self->nextToProcess);
+//    printf("\t\tShould be empty:\n");
+//    printPosList("\t\t\t", &self->found);
 
     Pos *reachableCache = malloc(sizeof(Pos) * MAX_REACHABLE_SIZE);
-    for (int i = 0; i < self->nextToProcessLength; ++i) {
-        Pos pos = self->nextToProcess[i];
+    for (int i = 0; i < self->nextToProcess.length; ++i) {
+        Pos pos = self->nextToProcess.data[i];
         int reachableFrom = directlyReachableFrom(*self->grid, pos, reachableCache);
 
         for (int j = 0; j < reachableFrom; ++j) {
-            if (!containsPos(self->cluster, self->clusterLength, reachableCache[j])) {
-                // TOdo make macro or explain ++ logic
-                self->cluster[self->clusterLength++] = reachableCache[j];
-                self->found[self->foundLength++] = reachableCache[j];
+            // TODO Add bidirectionality
+            if (!containsPos(&self->cluster, reachableCache[j]) && areReachablePointsConnected(*self->grid, pos, reachableCache[j])) {
+                appendToPosList(&self->cluster, reachableCache[j]);
+                appendToPosList(&self->found, reachableCache[j]);
             }
         }
-
-        printf("\t\t%d == %d\n", self->foundLength, reachableFrom);
     }
 
-    printf("\t\tFound:\n");
-    printPosList("\t\t\t", self->found, self->foundLength);
+//    printf("\t\tNewly Found:\n");
+//    printPosList("\t\t\t", &self->found);
 
-    // Swap arrays
-    Pos* mv = self->nextToProcess;
+    // Swap lists, relies on having compatible capacities.
+    PosList mv = self->nextToProcess;
     self->nextToProcess = self->found;
     self->found = mv;
-    self->nextToProcessLength = self->foundLength;
-    self->foundLength = 0;
+
+    // Reset found to zero, will ignore old elements
+    self->found.length = 0;
 }
 
 void performSearch(ClusterFinder *self) {
-    printf("Starting search\n");
-    while (self->nextToProcessLength != 0) {
+//    printf("Starting search\n");
+    while (self->nextToProcess.length != 0) {
         performSearchStep(self);
     }
-    printf("Ending search\n");
+//    printf("Ending search\n");
 }
 
 bool didFormPath(ClusterFinder *self) {
     bool connectedTop = false;
     bool connectedBottom = false;
 
-    for (int i = 0; i < self->clusterLength; ++i) {
-        Pos pos = self->cluster[i];
-        if (pos.y == 0) connectedBottom = true;
-        if (pos.y == self->grid->y_dim) connectedTop = true;
+    for (int i = 0; i < self->cluster.length; ++i) {
+        Pos pos = self->cluster.data[i];
+        printf("Check (%d, %d)\n", pos.x, pos.y);
+
+        if (pos.y == 0) {
+            printf("\t Con bottom (%d, %d)\n", pos.x, pos.y);
+            connectedBottom = true;
+        }
+
+        if (pos.y == self->grid->y_dim - 1) {
+            printf("\t Con top (%d, %d)\n", pos.x, pos.y);
+            connectedTop = true;
+        }
     }
 
     return connectedBottom && connectedTop;
+}
+
+#define RED   "\x1B[31m"
+#define GRN   "\x1B[32m"
+#define YEL   "\x1B[33m"
+#define BLU   "\x1B[34m"
+#define MAG   "\x1B[35m"
+#define CYN   "\x1B[36m"
+#define WHT   "\x1B[37m"
+#define RESET "\x1B[0m"
+
+void printCluster(ClusterFinder *clusterFinder) {
+    for (int j = 0; j < clusterFinder->grid->y_dim; ++j) {
+        for (int i = 0; i < clusterFinder->grid->x_dim; ++i) {
+            bool isInitialPoint = clusterFinder->initialPoint.x == i && clusterFinder->initialPoint.y == j;
+            bool inCluster = containsPos(&clusterFinder->cluster, (Pos) {i, j});
+
+            if (isInitialPoint) {
+                fprintf(stdout, RED);
+            } else if (inCluster) {
+                fprintf(stdout, MAG);
+            }
+
+            CellType cellType = *idx(*clusterFinder->grid, (Pos) {i, j});
+
+            fprintf(stdout, "%c", cellType);
+
+            fprintf(stdout, RESET);
+        }
+
+        printf("\n");
+    }
 }
