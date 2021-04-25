@@ -79,6 +79,11 @@ bool posEq(Pos a, Pos b) {
     return a.x == b.x && a.y == b.y;
 }
 
+bool positionInBounds(Grid grid, Pos pos) {
+    return !((pos.x < 0 || pos.x >= grid.x_dim) ||
+             (pos.y < 0 || pos.y >= grid.y_dim));
+}
+
 // FIXME this needs to be re-worked so we check for SC in corner even if we are currently on a Standard Cond.
 int directlyReachableFrom(Grid grid, Pos pos, Pos *out) {
     CellType type = *cellTypeOf(grid, pos);

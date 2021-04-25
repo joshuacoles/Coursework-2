@@ -28,6 +28,7 @@ typedef struct Pos {
 } Pos;
 
 bool posEq(Pos a, Pos b);
+bool positionInBounds(Grid grid, Pos b);
 
 CellType *cellTypeOf(Grid grid, Pos p);
 
@@ -36,6 +37,8 @@ void freeGrid(Grid grid);
 
 void fillGrid(Grid grid, int n, double pSuper);
 void printGrid(Grid grid);
+
+Pos offsetPosition(Pos a, int dx, int dy);
 
 // See definition for documentation
 int directlyReachableFrom(Grid grid, Pos pos, Pos *out);
