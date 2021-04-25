@@ -121,15 +121,6 @@ int findReachable(Grid grid, Pos from, Pos *out) {
     return length;
 }
 
-// Requires that a <-> is reachable from at least one direction.
-// Ie that a is a member of reachableFrom(b) or visa-versa.
-bool areReachablePointsConnected(Grid grid, Pos a, Pos b) {
-    CellType cellA = *cellTypeOf(grid, a);
-    CellType cellB = *cellTypeOf(grid, b);
-
-    return cellA != INSULATOR && cellB != INSULATOR;
-}
-
 void performSearchStep(ClusterFinder *self) {
 //    printf("\tPerforming step\n");
 //    printf("\t\tCluster:\n");

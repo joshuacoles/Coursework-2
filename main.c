@@ -28,8 +28,10 @@ void q2() {
     int x_dim = 20;
     int y_dim = 10;
     int n_conductors = 100;
-    int n_grids = 10;
+    int n_grids = 100000;
     double pSuper = 0.5;
+
+    int pf = 0;
 
     Grid grid = allocateGrid(x_dim, y_dim);
 
@@ -39,12 +41,15 @@ void q2() {
 
         ClusterFinder cf = newClusterFinder(&grid);
         performSearch(&cf);
-        printCluster(&cf);
+//        printCluster(&cf);
+        pf += didFormPath(&cf);
         printf("%d == %d\n", didFormPath(&cf), true);
         freeClusterFinder(cf);
     }
 
     freeGrid(grid);
+
+    printf("%f", pf / (double) n_grids);
 }
 
 int main() {
