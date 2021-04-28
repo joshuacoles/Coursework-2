@@ -190,10 +190,10 @@ void printCluster(ClusterFinder *clusterFinder) {
                 bool isInitialPoint = posEq(clusterFinder->initialPoint, pos);
                 bool inCluster = containsPos(&clusterFinder->cluster, pos);
 
-                if (inCluster) {
-                    fprintf(stdout, MAG);
-                } else if (isInitialPoint) {
+                if (isInitialPoint) {
                     fprintf(stdout, RED);
+                } else if (inCluster) {
+                    fprintf(stdout, MAG);
                 }
 
                 CellType cellType = cellTypeOf(*clusterFinder->grid, pos);
