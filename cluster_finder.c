@@ -1,13 +1,14 @@
 #include <printf.h>
 #include <assert.h>
+#include <math.h>
 #include "grid.h"
 #include "helpers.h"
 #include "cluster_finder.h"
 
 ClusterFinder newClusterFinderWithInitialPoint(Grid *grid, Pos initialPoint) {
-    PosList cluster = allocPosList(grid->x_dim * grid->y_dim);
-    PosList nextToProcess = allocPosList(grid->x_dim * grid->y_dim);
-    PosList found = allocPosList(grid->x_dim * grid->y_dim);
+    PosList cluster = allocPosList(grid->cells);
+    PosList nextToProcess = allocPosList(grid->cells);
+    PosList found = allocPosList(grid->cells);
 
     // Ensure initialPoint is within grid.
     assert(positionInBounds(*grid, initialPoint));
@@ -25,21 +26,22 @@ ClusterFinder newClusterFinderWithInitialPoint(Grid *grid, Pos initialPoint) {
 }
 
 ClusterFinder newClusterFinder(Grid *grid) {
-    int x;
-    int y;
+    Pos pos;
 
     int c = 0;
 
     do {
-        x = randomUniform(0, grid->x_dim);
-        y = randomUniform(0, grid->y_dim);
+        pos.x = randomUniform(0, grid->x_dim);
+        pos.y = randomUniform(0, grid->y_dim);
+        pos.z = randomUniform(0, grid->z_dim);
+
         if (c++ == 100) {
             fprintf(stderr,
                     "Warning, attempted to select a non-insulator as seed start, however failed after 100 attempts.");
         }
-    } while (*cellTypeOf(*grid, (Pos) {x, y}) == INSULATOR && c < 100);
+    } while (cellTypeOf(*grid, pos) == INSULATOR && c < 100);
 
-    return newClusterFinderWithInitialPoint(grid, (Pos) {x, y});
+    return newClusterFinderWithInitialPoint(grid, pos);
 }
 
 void freeClusterFinder(ClusterFinder clusterFinder) {
@@ -49,79 +51,60 @@ void freeClusterFinder(ClusterFinder clusterFinder) {
     // DO NOT free grid, we do not own that memory
 }
 
-// This is stored as a constant to allow for (easier) 3D grids.
-const int MAX_REACHABLE_SIZE = 8;
+const int MAX_REACHABLE_SIZE = 26;
 
-int strengthOf(CellType cellType) {
-    switch (cellType) {
-        case INSULATOR:
-            return 0;
-        case CONDUCTOR:
-            return 1;
-        case SUPER_CONDUCTOR:
-            return 2;
+bool testCandidate(Grid grid, Pos from, CellType fromType, int dx, int dy, int dz) {
+    // Ignore current position
+    if (dx == 0 && dy == 0 && dz == 0) return false;
+    int sig = 3 - (dx == 0) - (dy == 0) - (dz == 0);
 
-        default:
-            // Invalid CellType value
-            fprintf(stderr, "Invalid CellType '%c'\n", cellType);
+    Pos candidate = offsetPosition(from, dx, dy, dz);
+    if (!positionInBounds(grid, candidate)) return false;
 
-            return -1;
+    CellType candidateType = cellTypeOf(grid, candidate);
+
+    int fromStrength = strengthOf(fromType);
+    int candidateStrength = strengthOf(candidateType);
+
+    // If either are zero, no connection can form.
+    if (fromStrength * candidateStrength != 0) {
+        // We use the maximum function to represent bi-directionality (ie can connect if a or b can)
+        int maxStrength = max(fromStrength, candidateStrength);
+
+        if (sig <= maxStrength) {
+            return true;
+        }
     }
+
+    return false;
 }
 
 int findReachable(Grid grid, Pos from, Pos *out) {
-    CellType fromType = *cellTypeOf(grid, from);
+    CellType fromType = cellTypeOf(grid, from);
 
     // An insulator cannot connect to or from anything.
     if (fromType == INSULATOR) return 0;
 
     int length = 0;
 
-    for (int i = -1; i <= 1; ++i) {
-        for (int j = -1; j <= 1; ++j) {
-            // Ignore current position
-            if (i == 0 && j == 0) continue;
-            int sig = 2 - (i == 0) - (j == 0);
-
-            Pos candidate = offsetPosition(from, i, j);
-            if (!positionInBounds(grid, candidate)) continue;
-
-            CellType candidateType = *cellTypeOf(grid, candidate);
-
-            int fromStrength = strengthOf(fromType);
-            int candidateStrength = strengthOf(candidateType);
-
-            // If either are zero, no connection can form.
-            if (fromStrength * candidateStrength != 0) {
-                // We use the maximum function to represent bi-directionality (ie can connect if a or b can)
-                int maxStrength = max(fromStrength, candidateStrength);
-
-                if (sig <= maxStrength) {
-                    out[length++] = candidate;
+    // If we know this is a 2D grid, existing in a 3D, we can skip all `z` iteration.
+    if (grid.is2D) {
+        for (int i = -1; i <= 1; ++i) {
+            for (int j = -1; j <= 1; ++j) {
+                if (testCandidate(grid, from, fromType, i, j, 0)) {
+                    out[length++] = offsetPosition(from, i, j, 0);
                 }
             }
-
-            /* todo doc this in report
-             * Firstly we note can classify each delta (an (i,j) pair) by a signature, aka the number of zeros in
-             * its delta. This is displayed schematically below:
-             *
-             *  0 1 0
-             *  1 2 1
-             *  0 1 0
-             *
-             * With conductors connecting to sigs >= 1 and super-conductors sigs >= 0 (obviously ignoring the center).
-             *
-             * With the intention of allowing this to easily generalise to higher dimensions however we adapt this logic
-             * to be sig'(p) = Number of Dimensions - Number of Zeros, hence becoming,
-             *
-             *  2 1 2
-             *  1 0 1
-             *  2 1 2
-             *
-             * Where we ignore sig'(p) == 0 as the central point, then conductors are sig' <= 1, and super-condcutors
-             * sig' <= 2. This would allow us to create a third class of conductor in 3D which could connect to cells
-             * with a sig' of 3.
-             */
+        }
+    } else {
+        for (int i = -1; i <= 1; ++i) {
+            for (int j = -1; j <= 1; ++j) {
+                for (int k = -1; k <= 1; ++k) {
+                    if (testCandidate(grid, from, fromType, i, j, k)) {
+                        out[length++] = offsetPosition(from, i, j, k);
+                    }
+                }
+            }
         }
     }
 
@@ -167,11 +150,9 @@ void performSearchStep(ClusterFinder *self) {
 }
 
 void performSearch(ClusterFinder *self) {
-//    printf("Starting search\n");
     while (self->nextToProcess.length != 0) {
         performSearchStep(self);
     }
-//    printf("Ending search\n");
 }
 
 bool didFormPath(ClusterFinder *self) {
@@ -180,15 +161,13 @@ bool didFormPath(ClusterFinder *self) {
 
     for (int i = 0; i < self->cluster.length; ++i) {
         Pos pos = self->cluster.data[i];
-//        printf("Check (%d, %d)\n", pos.x, pos.y);
 
         if (pos.y == self->grid->y_dim - 1) {
-//            printf("\t Con bottom (%d, %d)\n", pos.x, pos.y);
             connectedBottom = true;
         }
 
+        // These are two separate conditions as for `y_dim = 1`, a partical can be both.
         if (pos.y == 0) {
-//            printf("\t Con top (%d, %d)\n", pos.x, pos.y);
             connectedTop = true;
         }
     }
@@ -197,22 +176,33 @@ bool didFormPath(ClusterFinder *self) {
 }
 
 void printCluster(ClusterFinder *clusterFinder) {
-    for (int j = 0; j < clusterFinder->grid->y_dim; ++j) {
-        for (int i = 0; i < clusterFinder->grid->x_dim; ++i) {
-            bool isInitialPoint = posEq(clusterFinder->initialPoint, (Pos) {i, j});
-            bool inCluster = containsPos(&clusterFinder->cluster, (Pos) {i, j});
+    printf("Cluster: \n");
+    Grid grid = *clusterFinder->grid;
 
-            if (inCluster) {
-                fprintf(stdout, MAG);
-            } else if (isInitialPoint) {
-                fprintf(stdout, RED);
+    for (int z = 0; z < grid.z_dim; ++z) {
+        fprintf(stdout, "(z = %d)\n", z);
+
+        for (int j = 0; j < grid.y_dim; ++j) {
+            for (int i = 0; i < grid.x_dim; ++i) {
+                Pos pos = (Pos) {i, j, z};
+
+                bool isInitialPoint = posEq(clusterFinder->initialPoint, pos);
+                bool inCluster = containsPos(&clusterFinder->cluster, pos);
+
+                if (inCluster) {
+                    fprintf(stdout, MAG);
+                } else if (isInitialPoint) {
+                    fprintf(stdout, RED);
+                }
+
+                CellType cellType = cellTypeOf(*clusterFinder->grid, pos);
+
+                fprintf(stdout, "%c", charOf(cellType));
+
+                fprintf(stdout, RESET);
             }
 
-            CellType cellType = *cellTypeOf(*clusterFinder->grid, (Pos) {i, j});
-
-            fprintf(stdout, "%c", charOf(cellType));
-
-            fprintf(stdout, RESET);
+            printf("\n");
         }
 
         printf("\n");

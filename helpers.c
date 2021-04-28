@@ -52,15 +52,6 @@ bool randomBool(double p) {
     return (rand() / (double) RAND_MAX) < p;
 }
 
-// Remove element at `index` from `array`, updating `len`.
-void removeElement(Pos *array, int index, int *len) {
-    for (int i = index; i < *len - 1; i++) {
-        array[i] = array[i + 1];
-    }
-
-    (*len)--;
-}
-
 int max(int a, int b) {
     return a > b ? a : b;
 }

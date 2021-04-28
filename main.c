@@ -14,6 +14,8 @@ typedef struct GridData {
 
 #define READ(str, fmt, pointer, condition) while (true) { printf(str); fscanf(stdin, fmt, pointer); if (condition) break; }
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "cert-err34-c"
 GridData acceptInput(bool superConductors) {
     int x_dim = 10;
     int y_dim = 10;
@@ -26,7 +28,7 @@ GridData acceptInput(bool superConductors) {
 
     if (superConductors) {
         double percentage = 0;
-        READ("Superconductor Percentage: ", "%f", &percentage, 0 <= percentage && percentage <= 1);
+        READ("Superconductor Percentage: ", "%lf", &percentage, 0 <= percentage && percentage <= 1);
         pSuper = percentage / 100;
     }
 
@@ -37,9 +39,10 @@ GridData acceptInput(bool superConductors) {
             .pSuper = pSuper
     };
 }
+#pragma clang diagnostic pop
 
 void q1Print(GridData data, int n_grids) {
-    Grid grid = allocateGrid(data.x_dim, data.y_dim);
+    Grid grid = allocateGrid2D(data.x_dim, data.y_dim);
 
     for (int i = 0; i <= n_grids; ++i) {
         // Fill completely regenerates grid so we can reuse the allocation
@@ -65,7 +68,7 @@ void q2a() {
     GridData data = acceptInput(false);
     data.pSuper = 0.1; // As per brief.
 
-    Grid grid = allocateGrid(data.x_dim, data.y_dim);
+    Grid grid = allocateGrid2D(data.x_dim, data.y_dim);
 
     for (int i = 0; i < 3; ++i) {
         // Fill completely regenerates grid (including insulators) so we can reuse the allocation
@@ -82,7 +85,7 @@ void q2a() {
 }
 
 int queryPathsFound(GridData data) {
-    Grid grid = allocateGrid(data.x_dim, data.y_dim);
+    Grid grid = allocateGrid2D(data.x_dim, data.y_dim);
 
     int pathFound = 0;
 
@@ -114,7 +117,7 @@ void q2b() {
 }
 
 void q2c() {
-    FILE* file = fopen("/Users/joshuacoles/Developer/checkouts/jc3091/cw-2-da/outNI.csv", "a");
+//    FILE* file = fopen("/Users/joshuacoles/Developer/checkouts/jc3091/cw-2-da/outNI3D.csv", "a");
 
     GridData data = (GridData) {
             .x_dim = 25,
@@ -128,19 +131,45 @@ void q2c() {
 //        for (int pD = 1; pD <= 10; pD++) {
 //        for (int pD = 0; pD <= 0; pD++) {
 //            data.pSuper = pD / (double) 10;
-            fprintf(file, "%d, %d, %d\n", nC, 10, queryPathsFound(data));
+            fprintf(stdout, "%d, %d, %d\n", nC, 10, queryPathsFound(data));
 //        }
 
 //        fflush(file);
     }
 
-    fclose(file);
+//    fclose(file);
+}
+
+void qq() {
+    GridData data = (GridData) {
+            .x_dim = 25,
+            .y_dim = 25,
+            .nConductors = 400,
+            .pSuper = 0.1//.1
+    };
+
+    Grid grid = allocateGrid2D(data.x_dim, data.y_dim);
+
+    for (int i = 0; i < 1; ++i) {
+        // Fill completely regenerates grid (including insulators) so we can reuse the allocation
+        fillGrid(grid, data.nConductors, data.pSuper);
+
+        printGrid(grid);
+
+        ClusterFinder cf = newClusterFinder(&grid);
+        performSearch(&cf);
+        printCluster(&cf);
+        printf("\n\n");
+        freeClusterFinder(cf);
+    }
+
+    freeGrid(grid);
 }
 
 void errSweep() {
     for (int x = 1; x <= 100; x++) {
         for (int y = 1; y <= 100; y++) {
-            Grid grid = allocateGrid(x, y);
+            Grid grid = allocateGrid2D(x, y);
 
             for (int n_c = 0; n_c <= x * y; n_c++) {
                 for (int pD = 0; pD <= 10; pD++) {
@@ -168,7 +197,7 @@ int main() {
 //    srand(11);
     srand(time(NULL));
 
-    q2c();
+    errSweep();
 
     return 0;
 }

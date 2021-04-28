@@ -6,24 +6,38 @@
 #include "helpers.h"
 #include "grid.h"
 
-Grid allocateGrid(int x_dim, int y_dim) {
-    // We avoid overflow, and hence UB, by simply restricting the valid values of `x_dim` and `y_dim`.
+Grid allocateGrid3D(int x_dim, int y_dim, int z_dim) {
+    int cells = x_dim * y_dim * z_dim;
+
+    // We avoid overflow, and hence UB, by simply restricting the valid values of `XX_dim`.
     // The maximum delta of any connection is +/- 1, hence we restrict to [0, INT32_MAX - 1] so delta-ed range becomes
     // [-1, INT32_MAX] which avoids overflow. We perform bounds checks on this to ensure the result is in
-    // [0, x_dim/y_dim] at computation.
+    // [0, XX_dim] at computation.
     assert(0 < x_dim && x_dim < INT32_MAX);
     assert(0 < y_dim && y_dim < INT32_MAX);
+    assert(0 < z_dim && z_dim < INT32_MAX);
 
-    // Allocate backing array, initially its contents is undefined (although in practice zeroed). Due to our `CellType`
-    // representation however `0` is not a valid value so we memset to `INSULATOR` to ensure validity.
-    CellType *data = malloc(sizeof(CellType) * x_dim * y_dim);
+    // Simple check for overflow on multiplication, not perfect but will work.
+    assert(0 < cells && x_dim <= cells && y_dim <= cells && z_dim <= cells);
+
+    CellType *data = malloc(sizeof(CellType) * cells);
     memset(data, INSULATOR, sizeof *data);
 
     return (Grid) {
+            .data = data,
             .x_dim = x_dim,
             .y_dim = y_dim,
-            .data = data
+            .z_dim = z_dim,
+            .cells = cells,
+            .is2D = false
     };
+}
+
+Grid allocateGrid2D(int x_dim, int y_dim) {
+    Grid grid = allocateGrid3D(x_dim, y_dim, 1);
+    grid.is2D = true;
+
+    return grid;
 }
 
 void freeGrid(Grid grid) {
@@ -31,17 +45,16 @@ void freeGrid(Grid grid) {
 }
 
 void fillGrid(Grid grid, int n, double pSuper) {
-    int cells = grid.x_dim * grid.y_dim;
-    assert(0 <= n && n <= cells);
+    assert(0 <= n && n <= grid.cells);
 
     int nn = 0;
 
-    for (int i = 0; i < cells; ++i) {
+    for (int i = 0; i < grid.cells; ++i) {
         grid.data[i] = INSULATOR;
     }
 
     while (nn < n) {
-        int pos = randomUniform(0, grid.x_dim * grid.y_dim);
+        int pos = randomUniform(0, grid.cells);
         if (grid.data[pos] == INSULATOR) {
             if (randomBool(pSuper)) {
                 grid.data[pos] = SUPER_CONDUCTOR;
@@ -55,37 +68,46 @@ void fillGrid(Grid grid, int n, double pSuper) {
 }
 
 void printGrid(Grid grid) {
-    for (int j = 0; j < grid.y_dim; ++j) {
-        for (int i = 0; i < grid.x_dim; ++i) {
-            fprintf(stdout, "%c", *cellTypeOf(grid, (Pos) {i, j}));
+    for (int z = 0; z < grid.z_dim; ++z) {
+        fprintf(stdout, "(z = %d)\n", z);
+
+        for (int j = 0; j < grid.y_dim; ++j) {
+            for (int i = 0; i < grid.x_dim; ++i) {
+                fprintf(stdout, "%c", charOf(cellTypeOf(grid, (Pos) {i, j, z})));
+            }
+
+            printf("\n");
         }
 
         printf("\n");
     }
 }
 
-CellType *cellTypeOf(Grid grid, Pos p) {
+int linearIndex(Grid grid, Pos p) {
     assert(positionInBounds(grid, p));
-    int linearIndex = p.x + (p.y * grid.x_dim);
-//    printf("LI: %d < %d\n", linearIndex, grid.x_dim * grid.y_dim);
-
-    return &grid.data[linearIndex];
+    return (p.z * grid.x_dim * grid.y_dim) + (p.y * grid.x_dim) + p.x;
 }
 
-Pos offsetPosition(Pos a, int dx, int dy) {
+CellType cellTypeOf(Grid grid, Pos p) {
+    return grid.data[linearIndex(grid, p)];
+}
+
+Pos offsetPosition(Pos a, int dx, int dy, int dz) {
     return (Pos) {
             .x = a.x + dx,
-            .y = a.y + dy
+            .y = a.y + dy,
+            .z = a.z + dz,
     };
 }
 
 bool posEq(Pos a, Pos b) {
-    return a.x == b.x && a.y == b.y;
+    return a.x == b.x && a.y == b.y && a.z == b.z;
 }
 
 bool positionInBounds(Grid grid, Pos pos) {
     return !((pos.x < 0 || pos.x >= grid.x_dim) ||
-             (pos.y < 0 || pos.y >= grid.y_dim));
+             (pos.y < 0 || pos.y >= grid.y_dim) ||
+             (pos.z < 0 || pos.z >= grid.z_dim));
 }
 
 char charOf(CellType cellType) {
@@ -99,5 +121,22 @@ char charOf(CellType cellType) {
         default:
             fprintf(stderr, "Error, unknown CellType\n");
             return 'E';
+    }
+}
+
+int strengthOf(CellType cellType) {
+    switch (cellType) {
+        case INSULATOR:
+            return 0;
+        case CONDUCTOR:
+            return 1;
+        case SUPER_CONDUCTOR:
+            return 2;
+
+        default:
+            // Invalid CellType value
+            fprintf(stderr, "Invalid CellType '%c'\n", cellType);
+
+            return -1;
     }
 }
