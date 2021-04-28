@@ -34,11 +34,10 @@ ClusterFinder newClusterFinder(Grid *grid) {
         x = randomUniform(0, grid->x_dim);
         y = randomUniform(0, grid->y_dim);
         if (c++ == 100) {
-            fprintf(stderr, "AAAAAHSFHSJF");
+            fprintf(stderr,
+                    "Warning, attempted to select a non-insulator as seed start, however failed after 100 attempts.");
         }
     } while (*cellTypeOf(*grid, (Pos) {x, y}) == INSULATOR && c < 100);
-
-    printf("Hey\n");
 
     return newClusterFinderWithInitialPoint(grid, (Pos) {x, y});
 }

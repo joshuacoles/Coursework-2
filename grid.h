@@ -4,12 +4,11 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-// Since we only refer to `CellType`s by the enum constants, we set their values to be the printed characters for
-// convenience.
+// Valid cell types
 typedef enum CellType {
-    INSULATOR = '.',
-    CONDUCTOR = '+',
-    SUPER_CONDUCTOR = '*',
+    INSULATOR = 0,
+    CONDUCTOR = 1,
+    SUPER_CONDUCTOR = 2,
 } CellType;
 
 // Grid is pointer to a contiguous memory block (`data`), with associated size information.
