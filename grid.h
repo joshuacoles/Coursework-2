@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <stdbool.h>
+#include "pos.h"
 
 /*
  * CellType
@@ -51,20 +52,7 @@ void freeGrid(Grid grid);
 void fillGrid(Grid grid, int n, double pSuper);
 void printGrid(Grid grid);
 
-/*
- * Pos functions
- * */
-
-typedef struct Pos {
-    int x;
-    int y;
-    int z;
-} Pos;
-
-bool posEq(Pos a, Pos b);
-bool positionInBounds(Grid grid, Pos b);
-Pos offsetPosition(Pos a, int dx, int dy, int dz);
-
 CellType cellTypeOf(Grid grid, Pos p);
+bool positionInBounds(Grid grid, Pos pos);
 
 #endif // COURSEWORK_2_C_GRID_H

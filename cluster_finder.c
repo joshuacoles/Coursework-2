@@ -4,6 +4,7 @@
 #include "grid.h"
 #include "helpers.h"
 #include "cluster_finder.h"
+#include "pos.h"
 
 ClusterFinder newClusterFinderWithInitialPoint(Grid *grid, Pos initialPoint) {
     PosList cluster = allocPosList(grid->cells);

@@ -5,6 +5,7 @@
 
 #include "helpers.h"
 #include "grid.h"
+#include "pos.h"
 
 Grid allocateGrid3D(int x_dim, int y_dim, int z_dim) {
     int cells = x_dim * y_dim * z_dim;
@@ -90,18 +91,6 @@ int linearIndex(Grid grid, Pos p) {
 
 CellType cellTypeOf(Grid grid, Pos p) {
     return grid.data[linearIndex(grid, p)];
-}
-
-Pos offsetPosition(Pos a, int dx, int dy, int dz) {
-    return (Pos) {
-            .x = a.x + dx,
-            .y = a.y + dy,
-            .z = a.z + dz,
-    };
-}
-
-bool posEq(Pos a, Pos b) {
-    return a.x == b.x && a.y == b.y && a.z == b.z;
 }
 
 bool positionInBounds(Grid grid, Pos pos) {
