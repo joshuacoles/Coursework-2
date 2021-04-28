@@ -40,7 +40,6 @@ void printGrid(Grid grid);
 
 Pos offsetPosition(Pos a, int dx, int dy);
 
-// See definition for documentation
-int directlyReachableFrom(Grid grid, Pos pos, Pos *out);
+char charOf(CellType cellType);
 
 #endif // COURSEWORK_2_C_GRID_H

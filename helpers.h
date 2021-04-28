@@ -34,4 +34,6 @@ int randomUniform(int r0, int r1);
 
 void removeElement(Pos *array, int index, int *len);
 
+int max(int a, int b);
+
 #endif // COURSEWORK_2_C_HELPERS_H

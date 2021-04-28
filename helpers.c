@@ -60,3 +60,7 @@ void removeElement(Pos *array, int index, int *len) {
 
     (*len)--;
 }
+
+int max(int a, int b) {
+    return a > b ? a : b;
+}

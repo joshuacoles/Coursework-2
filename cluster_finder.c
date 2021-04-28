@@ -10,7 +10,7 @@ ClusterFinder newClusterFinderWithInitialPoint(Grid *grid, Pos initialPoint) {
     PosList found = allocPosList(grid->x_dim * grid->y_dim);
 
     // Ensure initialPoint is within grid.
-    assert(0 < initialPoint.x < grid->x_dim && 0 < initialPoint.y < grid->y_dim);
+    assert(positionInBounds(*grid, initialPoint));
 
     appendToPosList(&cluster, initialPoint);
     appendToPosList(&nextToProcess, initialPoint);
@@ -25,8 +25,20 @@ ClusterFinder newClusterFinderWithInitialPoint(Grid *grid, Pos initialPoint) {
 }
 
 ClusterFinder newClusterFinder(Grid *grid) {
-    int x = randomUniform(0, grid->x_dim);
-    int y = randomUniform(0, grid->y_dim);
+    int x;
+    int y;
+
+    int c = 0;
+
+    do {
+        x = randomUniform(0, grid->x_dim);
+        y = randomUniform(0, grid->y_dim);
+        if (c++ == 100) {
+            fprintf(stderr, "AAAAAHSFHSJF");
+        }
+    } while (*cellTypeOf(*grid, (Pos) {x, y}) == INSULATOR && c < 100);
+
+    printf("Hey\n");
 
     return newClusterFinderWithInitialPoint(grid, (Pos) {x, y});
 }
@@ -56,10 +68,6 @@ int strengthOf(CellType cellType) {
 
             return -1;
     }
-}
-
-int max(int a, int b) {
-    return a > b ? a : b;
 }
 
 int findReachable(Grid grid, Pos from, Pos *out) {
@@ -195,15 +203,15 @@ void printCluster(ClusterFinder *clusterFinder) {
             bool isInitialPoint = posEq(clusterFinder->initialPoint, (Pos) {i, j});
             bool inCluster = containsPos(&clusterFinder->cluster, (Pos) {i, j});
 
-            if (isInitialPoint) {
-                fprintf(stdout, RED);
-            } else if (inCluster) {
+            if (inCluster) {
                 fprintf(stdout, MAG);
+            } else if (isInitialPoint) {
+                fprintf(stdout, RED);
             }
 
             CellType cellType = *cellTypeOf(*clusterFinder->grid, (Pos) {i, j});
 
-            fprintf(stdout, "%c", cellType);
+            fprintf(stdout, "%c", charOf(cellType));
 
             fprintf(stdout, RESET);
         }

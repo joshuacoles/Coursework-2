@@ -31,7 +31,9 @@ void freeGrid(Grid grid) {
 }
 
 void fillGrid(Grid grid, int n, double pSuper) {
-    size_t cells = grid.x_dim * grid.y_dim;
+    int cells = grid.x_dim * grid.y_dim;
+    assert(0 <= n && n <= cells);
+
     int nn = 0;
 
     for (int i = 0; i < cells; ++i) {
@@ -63,7 +65,9 @@ void printGrid(Grid grid) {
 }
 
 CellType *cellTypeOf(Grid grid, Pos p) {
-    int linearIndex = p.x + (p.y * grid.y_dim);
+    assert(positionInBounds(grid, p));
+    int linearIndex = p.x + (p.y * grid.x_dim);
+//    printf("LI: %d < %d\n", linearIndex, grid.x_dim * grid.y_dim);
 
     return &grid.data[linearIndex];
 }
@@ -82,4 +86,18 @@ bool posEq(Pos a, Pos b) {
 bool positionInBounds(Grid grid, Pos pos) {
     return !((pos.x < 0 || pos.x >= grid.x_dim) ||
              (pos.y < 0 || pos.y >= grid.y_dim));
+}
+
+char charOf(CellType cellType) {
+    switch (cellType) {
+        case INSULATOR:
+            return '.';
+        case CONDUCTOR:
+            return '+';
+        case SUPER_CONDUCTOR:
+            return '*';
+        default:
+            fprintf(stderr, "Error, unknown CellType\n");
+            return 'E';
+    }
 }
