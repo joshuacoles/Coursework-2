@@ -7,6 +7,14 @@
 #include "grid.h"
 #include "pos.h"
 
+// Define the actual values for our CellTypes.
+// Note that we have explicitly chosen *not* to have zero be a valid value as to help notice when we have failed to
+// properly handle our memory.
+const CellType
+        INSULATOR = 1,
+        CONDUCTOR = 2,
+        SUPER_CONDUCTOR = 3;
+
 Grid allocateGrid3D(int x_dim, int y_dim, int z_dim) {
     int cells = x_dim * y_dim * z_dim;
 
@@ -22,21 +30,19 @@ Grid allocateGrid3D(int x_dim, int y_dim, int z_dim) {
     assert(0 < cells && x_dim <= cells && y_dim <= cells && z_dim <= cells);
 
     CellType *data = malloc(sizeof(CellType) * cells);
-    memset(data, INSULATOR, sizeof *data);
+    memset(data, INSULATOR, sizeof(CellType) * cells); // This is only valid as sizeof(CellType) == 1
 
     return (Grid) {
             .data = data,
             .x_dim = x_dim,
             .y_dim = y_dim,
             .z_dim = z_dim,
-            .cells = cells,
-            .is2D = false
+            .cells = cells
     };
 }
 
 Grid allocateGrid2D(int x_dim, int y_dim) {
     Grid grid = allocateGrid3D(x_dim, y_dim, 1);
-    grid.is2D = true;
 
     return grid;
 }
@@ -50,9 +56,9 @@ void fillGrid(Grid grid, int n, double pSuper) {
 
     int nn = 0;
 
-    for (int i = 0; i < grid.cells; ++i) {
-        grid.data[i] = INSULATOR;
-    }
+    // Set all elements to be Insulators, allows us to re-use the allocation cleanly and ensures the memory at `data`
+    // is in a valid state.
+    memset(grid.data, INSULATOR, sizeof(CellType) * grid.cells); // This is only valid as sizeof(CellType) == 1
 
     while (nn < n) {
         int pos = randomUniform(0, grid.cells);
@@ -108,7 +114,7 @@ char charOf(CellType cellType) {
         case SUPER_CONDUCTOR:
             return '*';
         default:
-            fprintf(stderr, "Error, unknown CellType\n");
+            fprintf(stderr, "Invalid CellType '%c'\n", cellType);
             return 'E';
     }
 }

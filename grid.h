@@ -9,16 +9,17 @@
  * CellType
  * */
 
-// Valid cell types
-// Note that we have explicitly chosen *not* to have zero be a valid value as to help notice when we have failed to
-// properly handle our memory.
-typedef enum CellType {
-    INSULATOR = 1,
-    CONDUCTOR = 2,
-    SUPER_CONDUCTOR = 3,
-} CellType;
+typedef unsigned char CellType;
+const CellType INSULATOR, CONDUCTOR, SUPER_CONDUCTOR;
+
+//typedef enum CellType {
+//    INSULATOR = '.',
+//    CONDUCTOR = '+',
+//    SUPER_CONDUCTOR = '*',
+//} CellType;
 
 int strengthOf(CellType cellType);
+
 char charOf(CellType cellType);
 
 /*
@@ -34,7 +35,6 @@ typedef struct Grid {
     int y_dim;
     int z_dim;
 
-    bool is2D;
     int cells;
 
     CellType *data; // sizeof(CellType) * x_dim * y_dim
@@ -45,14 +45,17 @@ typedef struct Grid {
  * */
 
 Grid allocateGrid2D(int x_dim, int y_dim);
+
 Grid allocateGrid3D(int x_dim, int y_dim, int z_dim);
 
 void freeGrid(Grid grid);
 
 void fillGrid(Grid grid, int n, double pSuper);
+
 void printGrid(Grid grid);
 
 CellType cellTypeOf(Grid grid, Pos p);
+
 bool positionInBounds(Grid grid, Pos pos);
 
 #endif // COURSEWORK_2_C_GRID_H

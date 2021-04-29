@@ -8,4 +8,11 @@ add_executable(Coursework_2_c
         grid.h grid.c
         helpers.h helpers.c
         cluster_finder.h cluster_finder.c
-        pos.c pos.h entrypoints/questions.c entrypoints/questions.h)
+        pos.c pos.h entrypoints/questions.c entrypoints/questions.h entrypoints/data_collection.c entrypoints/data_collection.h)
+
+add_executable(datacollection
+        main_data_collection.c
+        grid.h grid.c
+        helpers.h helpers.c
+        cluster_finder.h cluster_finder.c
+        pos.c pos.h entrypoints/questions.c entrypoints/questions.h entrypoints/data_collection.c entrypoints/data_collection.h)

@@ -16,20 +16,23 @@
  * - `capacity`, maximum number of elements that can fit in the memory allocation.
  */
 typedef struct PosList {
-    Pos* data;
+    Pos *data;
     int length;
     int capacity;
 } PosList;
 
 PosList allocPosList(int capacity);
+
 void freePosList(PosList list);
 
 void printPosList(char *prefix, PosList const *list);
 
-void appendToPosList(PosList* list, Pos pos);
+void appendToPosList(PosList *list, Pos pos);
 
 bool containsPos(PosList const *list, Pos r);
+
 bool randomBool(double p);
+
 int randomUniform(int r0, int r1);
 
 void removeElement(Pos *array, int index, int *len);

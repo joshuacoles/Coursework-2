@@ -12,12 +12,15 @@ typedef struct GridData {
 #define READ(str, fmt, pointer, condition) while (true) { printf(str); fscanf(stdin, fmt, pointer); if (condition) break; }
 
 void q1a();
+
 void q1b();
 
 void q2a();
+
 void q2b();
+
 void q2c();
 
-void dataCollection();
+void q3();
 
 #endif //COURSEWORK_2_C_QUESTIONS_H

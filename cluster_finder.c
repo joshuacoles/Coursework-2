@@ -89,7 +89,7 @@ int findReachable(Grid grid, Pos from, Pos *out) {
     int length = 0;
 
     // If we know this is a 2D grid, existing in a 3D, we can skip all `z` iteration.
-    if (grid.is2D) {
+    if (grid.z_dim == 1) {
         for (int i = -1; i <= 1; ++i) {
             for (int j = -1; j <= 1; ++j) {
                 if (testCandidate(grid, from, fromType, i, j, 0)) {
@@ -167,7 +167,7 @@ bool didFormPath(ClusterFinder *self) {
             connectedBottom = true;
         }
 
-        // These are two separate conditions as for `y_dim = 1`, a partical can be both.
+        // These are two separate conditions as for `y_dim = 1`, a particle can be both.
         if (pos.y == 0) {
             connectedTop = true;
         }

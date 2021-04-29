@@ -11,6 +11,7 @@
 
 #include "../grid.h"
 #include "../cluster_finder.h"
+#include "data_collection.h"
 
 GridData acceptInput(bool superConductors) {
     int x_dim = 10;
@@ -24,7 +25,7 @@ GridData acceptInput(bool superConductors) {
 
     if (superConductors) {
         double percentage = 0;
-        READ("Superconductor Percentage: ", "%lf", &percentage, 0 <= percentage && percentage <= 1);
+        READ("Superconductor Percentage (no %% sign): ", "%lf", &percentage, 0 <= percentage && percentage <= 100);
         pSuper = percentage / 100;
     }
 
@@ -127,11 +128,32 @@ void q2c() {
             .pSuper = 0.1
     };
 
+    printf("Please wait a short time...\n");
+
     printf("Found a path in %d/100, 100x100 grids with 6,000 conductors and 10%% fSC\n", queryPathsFound(data));
 }
 
-/*
- * Question 2c & Question 3 Data collection
- * */
+void q3() {
+    Grid grid = allocateGrid3D(10, 10, 10);
 
-void dataCollection();
+    int pathFound = 0;
+
+    for (int nC = 0; nC <= 1000; nC++) {
+        for (int i = 0; i < 100; ++i) {
+            // Fill completely regenerates grid (including insulators) so we can reuse the allocation
+            fillGrid(grid, nC, 0.1);
+
+            ClusterFinder cf = newClusterFinder(&grid);
+            performSearch(&cf);
+            pathFound += didFormPath(&cf);
+            freeClusterFinder(cf);
+        }
+
+        if (pathFound >= 50) {
+            printf("Exceeds 50%% chance of connection in 10^3 grid with fSC = 10%%, at %d condcutors\n", nC);
+            break;
+        }
+    }
+
+    freeGrid(grid);
+}
