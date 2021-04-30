@@ -55,9 +55,8 @@ void freeClusterFinder(ClusterFinder clusterFinder) {
 const int MAX_REACHABLE_SIZE = 26;
 
 bool testCandidate(Grid grid, Pos from, CellType fromType, int dx, int dy, int dz) {
-    // Ignore current position
-    if (dx == 0 && dy == 0 && dz == 0) return false;
-    int sig = 3 - (dx == 0) - (dy == 0) - (dz == 0);
+    int taxiCabDistance = abs(dx) + abs(dy) + abs(dz);
+    if (taxiCabDistance == 0) return false;
 
     Pos candidate = offsetPosition(from, dx, dy, dz);
     if (!positionInBounds(grid, candidate)) return false;
@@ -67,20 +66,17 @@ bool testCandidate(Grid grid, Pos from, CellType fromType, int dx, int dy, int d
     int fromStrength = strengthOf(fromType);
     int candidateStrength = strengthOf(candidateType);
 
-    // If either are zero, no connection can form.
-    if (fromStrength * candidateStrength != 0) {
-        // We use the maximum function to represent bi-directionality (ie can connect if a or b can)
-        int maxStrength = max(fromStrength, candidateStrength);
+    if (fromStrength == 0 || candidateStrength == 0) return false;
 
-        if (sig <= maxStrength) {
-            return true;
-        }
-    }
-
-    return false;
+    return taxiCabDistance <= fromStrength || taxiCabDistance <= candidateStrength;
 }
 
-int findReachable(Grid grid, Pos from, Pos *out) {
+/**
+ * Finds all cells which are connected to the cell at `from` in `grid`.
+ *
+ * @returns length, the number connected cells found in the reachable neighbourhood, placed in the Pos *out array.
+ * */
+int findConnected(Grid grid, Pos from, Pos *out) {
     CellType fromType = cellTypeOf(grid, from);
 
     // An insulator cannot connect to or from anything.
@@ -121,17 +117,16 @@ void performSearchStep(ClusterFinder *self) {
 //    printf("\t\tFound (should be empty):\n");
 //    printPosList("\t\t\t", &self->found);
 
-    Pos *reachableCache = malloc(sizeof(Pos) * MAX_REACHABLE_SIZE);
+    Pos *connectedCache = malloc(sizeof(Pos) * MAX_REACHABLE_SIZE);
     for (int i = 0; i < self->nextToProcess.length; ++i) {
         Pos pos = self->nextToProcess.data[i];
-        int reachableFrom = findReachable(*self->grid, pos, reachableCache);
-//        printf("\t\tReachable From: %d\n", reachableFrom);
+        int connectedCells = findConnected(*self->grid, pos, connectedCache);
+//        printf("\t\# of Connected Cells: %d\n", connectedCells);
 
-        for (int j = 0; j < reachableFrom; ++j) {
-            if (!containsPos(&self->cluster, reachableCache[j]) /*&&
-                areReachablePointsConnected(*self->grid, pos, reachableCache[j])*/) {
-                appendToPosList(&self->cluster, reachableCache[j]);
-                appendToPosList(&self->found, reachableCache[j]);
+        for (int j = 0; j < connectedCells; ++j) {
+            if (!containsPos(&self->cluster, connectedCache[j])) {
+                appendToPosList(&self->cluster, connectedCache[j]);
+                appendToPosList(&self->found, connectedCache[j]);
             }
         }
     }

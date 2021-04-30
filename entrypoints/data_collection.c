@@ -1,22 +1,22 @@
-#include "../cluster_finder.h"
-#include "../grid.h"
 #include <printf.h>
 #include <time.h>
 #include <libc.h>
 #include <stdlib.h>
-#include "questions.h"
+
 #include "data_collection.h"
+#include "../cluster_finder.h"
+#include "../grid.h"
 
 /*
  * Data collection for stats
  * */
 
 void dataCollection2D() {
-    int xDim = 12;
-    int yDim = 12;
+    int xDim = 5;
+    int yDim = 5;
 
     int minNC = 0;
-    int macNC = xDim * yDim;
+    int macNC = xDim * yDim - 1;
     int ncStep = 1;
 
     Grid grid = allocateGrid2D(xDim, yDim);
@@ -25,7 +25,7 @@ void dataCollection2D() {
     sprintf(path, "./stats/dc-%d-%d-%d-%d.csv", xDim, yDim, minNC, macNC);
     FILE *file = fopen(path, "a");
 
-    struct timeval tv;
+    struct timeval tv = { 0, 0};
     gettimeofday(&tv, NULL);
     unsigned long startTime = 1000000 * tv.tv_sec + tv.tv_usec;
 

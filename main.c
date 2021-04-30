@@ -5,6 +5,7 @@
 
 #include "entrypoints/questions.h"
 
+// See entrypoints/questions.c for question implementation
 int main(int argc, char **argv) {
     srand(time(NULL));
 
